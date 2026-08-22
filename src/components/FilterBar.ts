@@ -11,7 +11,7 @@ export class FilterBar extends Component {
 	private input: TextComponent;
 	private clearButton: ButtonComponent;
 	private matchCountEl: HTMLSpanElement;
-	private currentRegex: RegExp | null = null;
+	currentRegex: RegExp | null = null;
 	private options: FilterBarOptions;
 
 	constructor(options: FilterBarOptions) {
@@ -36,7 +36,7 @@ export class FilterBar extends Component {
 
 		this.clearButton = new ButtonComponent(inputContainer);
 		this.clearButton.setIcon('x');
-		this.clearButton.addClass('dt-filter-clear');
+		this.clearButton.buttonEl.addClass('dt-filter-clear');
 		this.clearButton.onClick(() => {
 			this.clear();
 		});

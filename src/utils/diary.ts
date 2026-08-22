@@ -1,6 +1,7 @@
 import { App, TFile, moment } from 'obsidian';
 
 export interface DiaryEntry {
+	app: App;
 	time: string;
 	content: string;
 	filePath: string;
@@ -20,7 +21,7 @@ export function getFileDate(filename: string): string | null {
 	return match ? match[1] : null;
 }
 
-export function parseDiaryContent(content: string, filePath: string): DiaryEntry[] {
+export function parseDiaryContent(app: App, content: string, filePath: string): DiaryEntry[] {
 	const lines = content.split('\n');
 	const entries: DiaryEntry[] = [];
 
@@ -29,6 +30,7 @@ export function parseDiaryContent(content: string, filePath: string): DiaryEntry
 		const match = line.match(/^-\s+(\d{1,2}:\d{2})\s+(.+)$/);
 		if (match) {
 			entries.push({
+				app: app,
 				time: match[1],
 				content: match[2],
 				filePath: filePath,
@@ -76,7 +78,7 @@ export async function loadDiaryDays(
 		
 		if (file) {
 			const content = await app.vault.read(file);
-			const entries = parseDiaryContent(content, file.path);
+			const entries = parseDiaryContent(app, content, file.path);
 			
 			days.push({
 				date: dateStr,
@@ -120,7 +122,7 @@ export async function loadAllDiaryDays(
 		if (!date) continue;
 
 		const content = await app.vault.read(file);
-		const entries = parseDiaryContent(content, file.path);
+		const entries = parseDiaryContent(app, content, file.path);
 
 		days.push({
 			date: date,

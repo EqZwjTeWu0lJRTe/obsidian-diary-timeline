@@ -1,6 +1,20 @@
 import { App, PluginSettingTab, Setting } from 'obsidian';
 import DiaryTimelinePlugin from './main';
 
+export interface DiaryTimelineSettings {
+	diaryFolder: string;
+	daysToLoad: number;
+	dateFormat: string;
+	timeFormat: string;
+}
+
+export const DEFAULT_SETTINGS: DiaryTimelineSettings = {
+	diaryFolder: '/日志/',
+	daysToLoad: 30,
+	dateFormat: 'YYYY-MM-DD',
+	timeFormat: 'HH:mm'
+};
+
 export class DiaryTimelineSettingTab extends PluginSettingTab {
 	plugin: DiaryTimelinePlugin;
 

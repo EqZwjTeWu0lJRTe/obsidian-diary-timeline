@@ -8,7 +8,7 @@ export const VIEW_TYPE_DIARY_TIMELINE = 'diary-timeline-view';
 
 export class DiaryTimelineView extends ItemView {
 	plugin: DiaryTimelinePlugin;
-	private contentEl: HTMLDivElement;
+	private mainContentEl: HTMLDivElement;
 	private timelineEl: HTMLDivElement;
 	private inputEl: TextComponent;
 	private filterBar: FilterBar;
@@ -39,7 +39,7 @@ export class DiaryTimelineView extends ItemView {
 		container.empty();
 		container.addClass('dt-view-container');
 
-		this.contentEl = container.createDiv({ cls: 'dt-content' });
+		this.mainContentEl = container.createDiv({ cls: 'dt-content' });
 
 		this.createHeader();
 		this.createFilterBar();
@@ -50,7 +50,7 @@ export class DiaryTimelineView extends ItemView {
 	}
 
 	private createHeader() {
-		const headerEl = this.contentEl.createDiv({ cls: 'dt-header' });
+		const headerEl = this.mainContentEl.createDiv({ cls: 'dt-header' });
 
 		const titleEl = headerEl.createDiv({ cls: 'dt-header-title' });
 		titleEl.createSpan({ text: '📅' });
@@ -60,17 +60,17 @@ export class DiaryTimelineView extends ItemView {
 
 		const todayButton = new ButtonComponent(buttonGroup);
 		todayButton.setButtonText('回到今天');
-		todayButton.addClass('dt-button');
+		todayButton.buttonEl.addClass('dt-button');
 		todayButton.onClick(() => this.scrollToToday());
 
 		const refreshButton = new ButtonComponent(buttonGroup);
 		refreshButton.setIcon('refresh-cw');
-		refreshButton.addClass('dt-button');
+		refreshButton.buttonEl.addClass('dt-button');
 		refreshButton.onClick(() => this.loadData());
 
 		const modeButton = new ButtonComponent(buttonGroup);
 		modeButton.setButtonText(this.loadAllMode ? '最近30天' : '全部');
-		modeButton.addClass('dt-button');
+		modeButton.buttonEl.addClass('dt-button');
 		modeButton.onClick(async () => {
 			this.loadAllMode = !this.loadAllMode;
 			modeButton.setButtonText(this.loadAllMode ? '最近30天' : '全部');
@@ -85,22 +85,22 @@ export class DiaryTimelineView extends ItemView {
 			onClear: () => this.handleFilterClear()
 		});
 
-		this.contentEl.appendChild(this.filterBar.getEl());
+		this.mainContentEl.appendChild(this.filterBar.getEl());
 	}
 
 	private createTimeline() {
-		this.timelineEl = this.contentEl.createDiv({ cls: 'dt-timeline' });
+		this.timelineEl = this.mainContentEl.createDiv({ cls: 'dt-timeline' });
 
 		const loadingEl = this.timelineEl.createDiv({ cls: 'dt-loading' });
 		loadingEl.textContent = '加载中...';
 	}
 
 	private createInputArea() {
-		const inputContainer = this.contentEl.createDiv({ cls: 'dt-input-container' });
+		const inputContainer = this.mainContentEl.createDiv({ cls: 'dt-input-container' });
 
 		const addButton = new ButtonComponent(inputContainer);
 		addButton.setButtonText('➕');
-		addButton.addClass('dt-add-button');
+		addButton.buttonEl.addClass('dt-add-button');
 
 		this.inputEl = new TextComponent(inputContainer);
 		this.inputEl.setPlaceholder('添加新日志...');
