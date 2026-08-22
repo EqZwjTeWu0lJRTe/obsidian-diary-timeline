@@ -2,14 +2,15 @@ import { ItemView, WorkspaceLeaf, TextComponent, ButtonComponent, Setting } from
 import DiaryTimelinePlugin from '../main';
 import { DiaryDay, loadDiaryDays, loadAllDiaryDays, addDiaryEntry, filterEntries } from '../utils/diary';
 import { DiaryEntryComponent } from '../components/DiaryEntry';
+import { log, exportLogsToFile } from '../utils/logger';
 
 export const VIEW_TYPE_DIARY_TIMELINE = 'diary-timeline-view';
 
 export class DiaryTimelineView extends ItemView {
 	plugin: DiaryTimelinePlugin;
-	private mainContentEl: HTMLDivElement;
-	private timelineEl: HTMLDivElement;
-	private inputEl: TextComponent;
+	private mainContentEl: HTMLDivElement | null = null;
+	private timelineEl: HTMLDivElement | null = null;
+	private inputEl: TextComponent | null = null;
 	private days: DiaryDay[] = [];
 	private filteredDays: DiaryDay[] = [];
 	private isLoading = false;
@@ -18,6 +19,7 @@ export class DiaryTimelineView extends ItemView {
 	constructor(leaf: WorkspaceLeaf, plugin: DiaryTimelinePlugin) {
 		super(leaf);
 		this.plugin = plugin;
+		log('INFO', 'DiaryTimelineView 创建');
 	}
 
 	getViewType(): string {
@@ -33,20 +35,46 @@ export class DiaryTimelineView extends ItemView {
 	}
 
 	async onOpen() {
-		const container = this.containerEl.children[1];
-		container.empty();
-		container.addClass('dt-view-container');
+		log('INFO', 'onOpen 开始');
+		
+		try {
+			const container = this.containerEl.children[1];
+			if (!container) {
+				log('ERROR', 'container 不存在');
+				return;
+			}
+			
+			container.empty();
+			container.addClass('dt-view-container');
 
-		this.mainContentEl = container.createDiv({ cls: 'dt-content' });
+			this.mainContentEl = container.createDiv({ cls: 'dt-content' });
+			log('INFO', 'mainContentEl 创建成功');
 
-		this.createHeader();
-		this.createTimeline();
-		this.createInputArea();
+			this.createHeader();
+			log('INFO', 'header 创建成功');
 
-		await this.loadData();
+			this.createTimeline();
+			log('INFO', 'timeline 创建成功');
+
+			this.createInputArea();
+			log('INFO', 'inputArea 创建成功');
+
+			await this.loadData();
+			log('INFO', 'loadData 完成');
+		} catch (error) {
+			log('ERROR', 'onOpen 失败', error instanceof Error ? error.message : String(error));
+			console.error('onOpen 错误:', error);
+		}
 	}
 
 	private createHeader() {
+		log('INFO', 'createHeader 开始');
+		
+		if (!this.mainContentEl) {
+			log('ERROR', 'createHeader: mainContentEl 为空');
+			return;
+		}
+		
 		const headerEl = this.mainContentEl.createDiv({ cls: 'dt-header' });
 
 		const titleEl = headerEl.createDiv({ cls: 'dt-header-title' });
@@ -65,6 +93,16 @@ export class DiaryTimelineView extends ItemView {
 		refreshButton.buttonEl.addClass('dt-button');
 		refreshButton.onClick(() => this.loadData());
 
+		const exportButton = new ButtonComponent(buttonGroup);
+		exportButton.setButtonText('导出日志');
+		exportButton.buttonEl.addClass('dt-button');
+		exportButton.onClick(async () => {
+			const filepath = await exportLogsToFile(this.app, this.plugin.settings.diaryFolder);
+			if (filepath) {
+				log('INFO', `日志已导出到: ${filepath}`);
+			}
+		});
+
 		const modeButton = new ButtonComponent(buttonGroup);
 		modeButton.setButtonText(this.loadAllMode ? '最近30天' : '全部');
 		modeButton.buttonEl.addClass('dt-button');
@@ -73,13 +111,30 @@ export class DiaryTimelineView extends ItemView {
 			modeButton.setButtonText(this.loadAllMode ? '最近30天' : '全部');
 			await this.loadData();
 		});
+		
+		log('INFO', 'createHeader 完成');
 	}
 
 	private createTimeline() {
+		log('INFO', 'createTimeline 开始');
+		
+		if (!this.mainContentEl) {
+			log('ERROR', 'createTimeline: mainContentEl 为空');
+			return;
+		}
+		
 		this.timelineEl = this.mainContentEl.createDiv({ cls: 'dt-timeline' });
+		log('INFO', 'createTimeline 完成');
 	}
 
 	private createInputArea() {
+		log('INFO', 'createInputArea 开始');
+		
+		if (!this.mainContentEl) {
+			log('ERROR', 'createInputArea: mainContentEl 为空');
+			return;
+		}
+		
 		const inputContainer = this.mainContentEl.createDiv({ cls: 'dt-input-container' });
 
 		const addButton = new ButtonComponent(inputContainer);
@@ -92,28 +147,38 @@ export class DiaryTimelineView extends ItemView {
 
 		this.inputEl.inputEl.addEventListener('keydown', async (e) => {
 			if (e.key === 'Enter' && !e.isComposing) {
-				const content = this.inputEl.getValue().trim();
+				const content = this.inputEl?.getValue().trim();
 				if (content) {
 					await this.addEntry(content);
-					this.inputEl.setValue('');
+					this.inputEl?.setValue('');
 				}
 			}
 		});
 
 		addButton.onClick(async () => {
-			const content = this.inputEl.getValue().trim();
+			const content = this.inputEl?.getValue().trim();
 			if (content) {
 				await this.addEntry(content);
-				this.inputEl.setValue('');
+				this.inputEl?.setValue('');
 			}
 		});
+		
+		log('INFO', 'createInputArea 完成');
 	}
 
 	async loadData() {
-		if (this.isLoading) return;
+		log('INFO', 'loadData 开始');
+		
+		if (this.isLoading) {
+			log('WARN', 'loadData: 已在加载中，跳过');
+			return;
+		}
 		this.isLoading = true;
 
 		try {
+			log('INFO', `加载模式: ${this.loadAllMode ? '全部' : '最近' + this.plugin.settings.daysToLoad + '天'}`);
+			log('INFO', `日记文件夹: ${this.plugin.settings.diaryFolder}`);
+			
 			if (this.loadAllMode) {
 				this.days = await loadAllDiaryDays(this.app, this.plugin.settings.diaryFolder);
 			} else {
@@ -123,14 +188,19 @@ export class DiaryTimelineView extends ItemView {
 					this.plugin.settings.daysToLoad
 				);
 			}
+			
+			log('INFO', `加载了 ${this.days.length} 天的日志`);
 
 			// 应用筛选
 			const filterRegex = this.plugin.settings.filterRegex;
 			if (filterRegex) {
+				log('INFO', `应用筛选: ${filterRegex}`);
 				try {
 					const regex = new RegExp(filterRegex, 'gi');
 					this.filteredDays = filterEntries(this.days, regex);
+					log('INFO', `筛选后剩余 ${this.filteredDays.length} 天`);
 				} catch (e) {
+					log('ERROR', '正则表达式错误', filterRegex);
 					this.filteredDays = [...this.days];
 				}
 			} else {
@@ -138,7 +208,9 @@ export class DiaryTimelineView extends ItemView {
 			}
 
 			this.renderTimeline();
+			log('INFO', 'loadData 完成');
 		} catch (error) {
+			log('ERROR', 'loadData 失败', error instanceof Error ? error.message : String(error));
 			console.error('加载日志失败:', error);
 		} finally {
 			this.isLoading = false;
@@ -146,13 +218,19 @@ export class DiaryTimelineView extends ItemView {
 	}
 
 	private renderTimeline() {
-		if (!this.timelineEl) return;
+		log('INFO', 'renderTimeline 开始');
+		
+		if (!this.timelineEl) {
+			log('ERROR', 'renderTimeline: timelineEl 为空');
+			return;
+		}
 		
 		this.timelineEl.empty();
 
 		if (this.filteredDays.length === 0) {
 			const emptyEl = this.timelineEl.createDiv({ cls: 'dt-empty' });
 			emptyEl.textContent = '暂无日志';
+			log('INFO', 'renderTimeline: 无日志');
 			return;
 		}
 
@@ -183,15 +261,23 @@ export class DiaryTimelineView extends ItemView {
 				}
 			}
 		}
+		
+		log('INFO', `renderTimeline 完成，渲染了 ${this.filteredDays.length} 天`);
 	}
 
 	private async addEntry(content: string) {
+		log('INFO', `添加条目: ${content}`);
 		await addDiaryEntry(this.app, this.plugin.settings.diaryFolder, content);
 		await this.loadData();
 	}
 
 	scrollToToday() {
-		if (!this.timelineEl) return;
+		log('INFO', 'scrollToToday');
+		
+		if (!this.timelineEl) {
+			log('ERROR', 'scrollToToday: timelineEl 为空');
+			return;
+		}
 		
 		const today = new Date().toISOString().split('T')[0];
 		const todayEl = this.timelineEl.querySelector(`[data-date="${today}"]`);
@@ -207,6 +293,6 @@ export class DiaryTimelineView extends ItemView {
 	}
 
 	async onClose() {
-		// 清理资源
+		log('INFO', 'onClose');
 	}
 }
