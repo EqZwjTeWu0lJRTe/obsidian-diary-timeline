@@ -6,13 +6,15 @@ export interface DiaryTimelineSettings {
 	daysToLoad: number;
 	dateFormat: string;
 	timeFormat: string;
+	filterRegex: string;
 }
 
 export const DEFAULT_SETTINGS: DiaryTimelineSettings = {
 	diaryFolder: '/日志/',
 	daysToLoad: 30,
 	dateFormat: 'YYYY-MM-DD',
-	timeFormat: 'HH:mm'
+	timeFormat: 'HH:mm',
+	filterRegex: ''
 };
 
 export class DiaryTimelineSettingTab extends PluginSettingTab {
@@ -73,6 +75,17 @@ export class DiaryTimelineSettingTab extends PluginSettingTab {
 				.setValue(this.plugin.settings.timeFormat)
 				.onChange(async (value) => {
 					this.plugin.settings.timeFormat = value;
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(containerEl)
+			.setName('筛选正则')
+			.setDesc('使用正则表达式筛选日志内容（留空显示全部）')
+			.addText(text => text
+				.setPlaceholder('例如：报告|邮件')
+				.setValue(this.plugin.settings.filterRegex)
+				.onChange(async (value) => {
+					this.plugin.settings.filterRegex = value;
 					await this.plugin.saveSettings();
 				}));
 

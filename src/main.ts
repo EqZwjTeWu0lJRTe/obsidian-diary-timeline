@@ -1,4 +1,4 @@
-import { App, Plugin, WorkspaceLeaf, addIcon } from 'obsidian';
+import { App, Plugin, WorkspaceLeaf } from 'obsidian';
 import { DiaryTimelineView, VIEW_TYPE_DIARY_TIMELINE } from './views/TimelineView';
 import { DiaryTimelineSettingTab, DiaryTimelineSettings, DEFAULT_SETTINGS } from './settings';
 
@@ -55,13 +55,13 @@ export default class DiaryTimelinePlugin extends Plugin {
 			return;
 		}
 
-		const leaf = this.app.workspace.getRightLeaf(false);
+		// 在主标签页打开
+		const leaf = this.app.workspace.getLeaf('tab');
 		if (leaf) {
 			await leaf.setViewState({
 				type: VIEW_TYPE_DIARY_TIMELINE,
 				active: true,
 			});
-			this.app.workspace.revealLeaf(leaf);
 		}
 	}
 

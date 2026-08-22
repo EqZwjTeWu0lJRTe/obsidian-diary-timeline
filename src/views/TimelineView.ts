@@ -1,7 +1,6 @@
-import { ItemView, WorkspaceLeaf, App, TextComponent, ButtonComponent, Setting } from 'obsidian';
+import { ItemView, WorkspaceLeaf, TextComponent, ButtonComponent, Setting } from 'obsidian';
 import DiaryTimelinePlugin from '../main';
-import { DiaryDay, DiaryEntry, loadDiaryDays, loadAllDiaryDays, addDiaryEntry, filterEntries } from '../utils/diary';
-import { FilterBar } from '../components/FilterBar';
+import { DiaryDay, loadDiaryDays, loadAllDiaryDays, addDiaryEntry, filterEntries } from '../utils/diary';
 import { DiaryEntryComponent } from '../components/DiaryEntry';
 
 export const VIEW_TYPE_DIARY_TIMELINE = 'diary-timeline-view';
@@ -11,7 +10,6 @@ export class DiaryTimelineView extends ItemView {
 	private mainContentEl: HTMLDivElement;
 	private timelineEl: HTMLDivElement;
 	private inputEl: TextComponent;
-	private filterBar: FilterBar;
 	private days: DiaryDay[] = [];
 	private filteredDays: DiaryDay[] = [];
 	private isLoading = false;
@@ -42,7 +40,6 @@ export class DiaryTimelineView extends ItemView {
 		this.mainContentEl = container.createDiv({ cls: 'dt-content' });
 
 		this.createHeader();
-		this.createFilterBar();
 		this.createTimeline();
 		this.createInputArea();
 
@@ -78,21 +75,8 @@ export class DiaryTimelineView extends ItemView {
 		});
 	}
 
-	private createFilterBar() {
-		this.filterBar = new FilterBar({
-			placeholder: '输入正则筛选...',
-			onFilter: (regex) => this.handleFilter(regex),
-			onClear: () => this.handleFilterClear()
-		});
-
-		this.mainContentEl.appendChild(this.filterBar.getEl());
-	}
-
 	private createTimeline() {
 		this.timelineEl = this.mainContentEl.createDiv({ cls: 'dt-timeline' });
-
-		const loadingEl = this.timelineEl.createDiv({ cls: 'dt-loading' });
-		loadingEl.textContent = '加载中...';
 	}
 
 	private createInputArea() {
@@ -139,7 +123,20 @@ export class DiaryTimelineView extends ItemView {
 					this.plugin.settings.daysToLoad
 				);
 			}
-			this.filteredDays = [...this.days];
+
+			// 应用筛选
+			const filterRegex = this.plugin.settings.filterRegex;
+			if (filterRegex) {
+				try {
+					const regex = new RegExp(filterRegex, 'gi');
+					this.filteredDays = filterEntries(this.days, regex);
+				} catch (e) {
+					this.filteredDays = [...this.days];
+				}
+			} else {
+				this.filteredDays = [...this.days];
+			}
+
 			this.renderTimeline();
 		} catch (error) {
 			console.error('加载日志失败:', error);
@@ -149,17 +146,14 @@ export class DiaryTimelineView extends ItemView {
 	}
 
 	private renderTimeline() {
+		if (!this.timelineEl) return;
+		
 		this.timelineEl.empty();
 
 		if (this.filteredDays.length === 0) {
 			const emptyEl = this.timelineEl.createDiv({ cls: 'dt-empty' });
 			emptyEl.textContent = '暂无日志';
 			return;
-		}
-
-		let totalEntries = 0;
-		for (const day of this.days) {
-			totalEntries += day.entries.length;
 		}
 
 		for (const day of this.filteredDays) {
@@ -177,7 +171,9 @@ export class DiaryTimelineView extends ItemView {
 				for (const entry of day.entries) {
 					const entryComponent = new DiaryEntryComponent({
 						entry: entry,
-						highlightRegex: this.filterBar.currentRegex,
+						highlightRegex: this.plugin.settings.filterRegex 
+							? new RegExp(this.plugin.settings.filterRegex, 'gi') 
+							: null,
 						onEdit: () => this.loadData(),
 						onDelete: () => this.loadData()
 					});
@@ -187,27 +183,6 @@ export class DiaryTimelineView extends ItemView {
 				}
 			}
 		}
-
-		if (this.filterBar.currentRegex) {
-			this.filterBar.updateMatchCount(
-				this.filteredDays.reduce((sum, day) => sum + day.entries.length, 0),
-				totalEntries
-			);
-		}
-	}
-
-	private async handleFilter(regex: RegExp | null) {
-		if (regex) {
-			this.filteredDays = filterEntries(this.days, regex);
-		} else {
-			this.filteredDays = [...this.days];
-		}
-		this.renderTimeline();
-	}
-
-	private async handleFilterClear() {
-		this.filteredDays = [...this.days];
-		this.renderTimeline();
 	}
 
 	private async addEntry(content: string) {
@@ -216,6 +191,8 @@ export class DiaryTimelineView extends ItemView {
 	}
 
 	scrollToToday() {
+		if (!this.timelineEl) return;
+		
 		const today = new Date().toISOString().split('T')[0];
 		const todayEl = this.timelineEl.querySelector(`[data-date="${today}"]`);
 		if (todayEl) {
