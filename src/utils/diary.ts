@@ -64,12 +64,13 @@ export async function loadDiaryDays(
 	const end = startDate ? moment(startDate, 'YYYY-MM-DD') : moment();
 	const start = end.clone().subtract(daysToLoad - 1, 'days');
 
+	// 支持子文件夹搜索
 	const diaryFiles = files.filter(file => {
 		const date = getFileDate(file.name);
 		if (!date) return false;
 		const fileDate = moment(date, 'YYYY-MM-DD');
 		return fileDate.isBetween(start, end, 'days', '[]') &&
-			file.path.startsWith(folder);
+			file.path.includes(folder);
 	});
 
 	for (let d = end.clone(); d.isAfter(start) || d.isSame(start, 'day'); d.subtract(1, 'day')) {
@@ -106,9 +107,10 @@ export async function loadAllDiaryDays(
 	folder: string
 ): Promise<DiaryDay[]> {
 	const files = app.vault.getMarkdownFiles();
+	// 支持子文件夹搜索
 	const diaryFiles = files.filter(file => {
 		const date = getFileDate(file.name);
-		return date && file.path.startsWith(folder);
+		return date && file.path.includes(folder);
 	}).sort((a, b) => {
 		const dateA = getFileDate(a.name) || '';
 		const dateB = getFileDate(b.name) || '';
