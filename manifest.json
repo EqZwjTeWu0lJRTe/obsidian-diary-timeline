@@ -1,0 +1,9 @@
+{
+	"id": "diary-timeline",
+	"name": "Diary Timeline",
+	"version": "1.0.0",
+	"minAppVersion": "0.15.0",
+	"description": "将所有日记文件按时间顺序串成连续时间线视图，类似 Logseq 日志页面。",
+	"author": "Lyna",
+	"isDesktopOnly": false
+}

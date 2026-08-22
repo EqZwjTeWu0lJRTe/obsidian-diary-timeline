@@ -1,0 +1,275 @@
+.dt-view-container {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	overflow: hidden;
+}
+
+.dt-content {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	overflow: hidden;
+}
+
+/* Header */
+.dt-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 12px 16px;
+	border-bottom: 1px solid var(--background-modifier-border);
+	background: var(--background-primary);
+}
+
+.dt-header-title {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 16px;
+	font-weight: 600;
+	color: var(--text-normal);
+}
+
+.dt-header-buttons {
+	display: flex;
+	gap: 8px;
+}
+
+.dt-button {
+	font-size: 12px;
+	padding: 4px 8px;
+}
+
+/* Filter Bar */
+.dt-filter-bar {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 16px;
+	border-bottom: 1px solid var(--background-modifier-border);
+	background: var(--background-secondary);
+}
+
+.dt-filter-input-container {
+	display: flex;
+	align-items: center;
+	flex: 1;
+	gap: 8px;
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	padding: 4px 8px;
+}
+
+.dt-filter-icon {
+	font-size: 14px;
+	opacity: 0.6;
+}
+
+.dt-filter-input {
+	flex: 1;
+	border: none !important;
+	background: transparent !important;
+	padding: 4px !important;
+	font-size: 13px;
+}
+
+.dt-filter-input:focus {
+	box-shadow: none !important;
+}
+
+.dt-filter-clear {
+	padding: 2px 6px;
+	min-width: auto;
+}
+
+.dt-filter-count {
+	font-size: 12px;
+	color: var(--text-muted);
+	white-space: nowrap;
+}
+
+.dt-hidden {
+	display: none !important;
+}
+
+/* Timeline */
+.dt-timeline {
+	flex: 1;
+	overflow-y: auto;
+	padding: 16px;
+}
+
+.dt-loading {
+	text-align: center;
+	padding: 32px;
+	color: var(--text-muted);
+}
+
+.dt-empty {
+	text-align: center;
+	padding: 32px;
+	color: var(--text-muted);
+	font-style: italic;
+}
+
+/* Day */
+.dt-day {
+	margin-bottom: 24px;
+}
+
+.dt-date-header {
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--text-normal);
+	padding: 8px 12px;
+	margin-bottom: 8px;
+	background: var(--background-secondary);
+	border-radius: 4px;
+	border-left: 3px solid var(--interactive-accent);
+}
+
+.dt-entries {
+	padding-left: 16px;
+}
+
+.dt-no-entries {
+	padding: 8px 12px;
+	color: var(--text-muted);
+	font-style: italic;
+	font-size: 13px;
+}
+
+/* Entry */
+.dt-entry {
+	display: flex;
+	align-items: flex-start;
+	padding: 6px 12px;
+	margin-bottom: 4px;
+	border-radius: 4px;
+	position: relative;
+	transition: background-color 0.15s ease;
+}
+
+.dt-entry:hover {
+	background: var(--background-secondary);
+}
+
+.dt-entry-time {
+	font-size: 12px;
+	color: var(--text-muted);
+	margin-right: 12px;
+	min-width: 45px;
+	font-family: monospace;
+}
+
+.dt-entry-content {
+	flex: 1;
+	font-size: 14px;
+	color: var(--text-normal);
+	line-height: 1.5;
+	word-break: break-word;
+}
+
+.dt-entry-edit-input {
+	width: 100%;
+	padding: 4px 8px;
+	font-size: 14px;
+	border: 1px solid var(--interactive-accent);
+	border-radius: 4px;
+	background: var(--background-primary);
+	color: var(--text-normal);
+}
+
+.dt-entry-delete {
+	position: absolute;
+	right: 8px;
+	top: 50%;
+	transform: translateY(-50%);
+	padding: 2px 6px;
+	font-size: 14px;
+	line-height: 1;
+	color: var(--text-muted);
+	background: var(--background-secondary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	cursor: pointer;
+	opacity: 0;
+	transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.dt-entry:hover .dt-entry-delete {
+	opacity: 1;
+}
+
+.dt-entry-delete:hover {
+	color: var(--text-error);
+	border-color: var(--text-error);
+}
+
+/* Highlight */
+.dt-highlight {
+	background: var(--text-highlight-bg);
+	color: var(--text-highlight-bg-color);
+	padding: 0 2px;
+	border-radius: 2px;
+}
+
+/* Input Area */
+.dt-input-container {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 12px 16px;
+	border-top: 1px solid var(--background-modifier-border);
+	background: var(--background-primary);
+}
+
+.dt-add-button {
+	padding: 6px 10px;
+	min-width: auto;
+	font-size: 14px;
+}
+
+.dt-main-input {
+	flex: 1;
+	padding: 8px 12px;
+	font-size: 14px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	background: var(--background-primary);
+	color: var(--text-normal);
+}
+
+.dt-main-input:focus {
+	border-color: var(--interactive-accent);
+	box-shadow: 0 0 0 2px var(--interactive-accent-hover);
+}
+
+/* Scrollbar */
+.dt-timeline::-webkit-scrollbar {
+	width: 8px;
+}
+
+.dt-timeline::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.dt-timeline::-webkit-scrollbar-thumb {
+	background: var(--background-modifier-border);
+	border-radius: 4px;
+}
+
+.dt-timeline::-webkit-scrollbar-thumb:hover {
+	background: var(--text-muted);
+}
+
+/* Dark mode adjustments */
+.theme-dark .dt-entry-delete {
+	background: var(--background-secondary-alt);
+}
+
+.theme-dark .dt-entry-edit-input {
+	background: var(--background-secondary-alt);
+}
