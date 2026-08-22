@@ -38,14 +38,17 @@ export class DiaryTimelineView extends ItemView {
 		log('INFO', 'onOpen 开始');
 		
 		try {
-			const container = this.containerEl.children[1];
+			const container = this.containerEl;
 			if (!container) {
 				log('ERROR', 'container 不存在');
 				return;
 			}
 			
-			container.empty();
-			container.addClass('dt-view-container');
+			// 清空内容区域
+			const contentEl = container.querySelector('.view-content') || container.children[1];
+			if (contentEl) {
+				contentEl.empty();
+			}
 
 			this.mainContentEl = container.createDiv({ cls: 'dt-content' });
 			log('INFO', 'mainContentEl 创建成功');
