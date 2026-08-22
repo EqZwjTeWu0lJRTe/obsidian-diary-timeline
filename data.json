@@ -3,5 +3,5 @@
   "daysToLoad": 30,
   "dateFormat": "YYYY-MM-DD",
   "timeFormat": "HH:mm",
-  "filterRegex": "\\*\\*(?:📝 重点事件|💡 思考与感悟)\\*\\*"
+  "filterRegex": "重点事件|思考与感悟"
 }

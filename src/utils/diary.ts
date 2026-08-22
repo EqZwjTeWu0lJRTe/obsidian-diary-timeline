@@ -6,6 +6,7 @@ export interface DiaryEntry {
 	content: string;
 	filePath: string;
 	lineNumber: number;
+	section?: string; // 所属章节，如 "重点事件"、"思考与感悟"
 }
 
 export interface DiaryDay {
@@ -24,18 +25,89 @@ export function getFileDate(filename: string): string | null {
 export function parseDiaryContent(app: App, content: string, filePath: string): DiaryEntry[] {
 	const lines = content.split('\n');
 	const entries: DiaryEntry[] = [];
+	
+	let currentSection = '';
+	
+	// 支持多种时间格式的正则
+	const timePatterns = [
+		/^-\s+(\d{1,2}:\d{2})\s+(.+)$/,  // - 09:00 开会
+		/^-\s+\*\*时间\*\*[：:]\s*(\d{1,2}:\d{2})/,  // - **时间**：09:00
+		/^[-*]\s+(\d{1,2}:\d{2})\s+(.+)$/,  // * 09:00 开会 或 - 09:00 开会
+	];
+
+	// 检测章节标题
+	const sectionPatterns = [
+		/\*\*📝\s*(.+?)\*\*/,  // **📝 重点事件**
+		/\*\*💡\s*(.+?)\*\*/,  // **💡 思考与感悟**
+		/^#+\s*(.+)$/,  // # 标题
+		/^>\s*\[!(\w+)\]/,  // > [!note] 标题
+	];
 
 	for (let i = 0; i < lines.length; i++) {
-		const line = lines[i].trim();
-		const match = line.match(/^-\s+(\d{1,2}:\d{2})\s+(.+)$/);
-		if (match) {
-			entries.push({
-				app: app,
-				time: match[1],
-				content: match[2],
-				filePath: filePath,
-				lineNumber: i
-			});
+		const line = lines[i];
+		const trimmedLine = line.trim();
+		
+		// 检测章节
+		for (const pattern of sectionPatterns) {
+			const match = trimmedLine.match(pattern);
+			if (match) {
+				currentSection = match[1] || match[0];
+				break;
+			}
+		}
+		
+		// 检测时间格式的条目
+		for (const pattern of timePatterns) {
+			const match = trimmedLine.match(pattern);
+			if (match) {
+				let time = match[1];
+				let content = match[2] || trimmedLine;
+				
+				// 如果是 "时间" 格式，提取实际时间
+				if (trimmedLine.includes('**时间**')) {
+					const timeMatch = trimmedLine.match(/\*\*时间\*\*[：:]\s*(\d{1,2}:\d{2})/);
+					if (timeMatch) {
+						time = timeMatch[1];
+						// 获取整行内容作为事件描述
+						content = trimmedLine.replace(/^[-*]\s*\*\*时间\*\*[：:]\s*\d{1,2}:\d{2}\s*/, '');
+					}
+				}
+				
+				entries.push({
+					app: app,
+					time: time,
+					content: content,
+					filePath: filePath,
+					lineNumber: i,
+					section: currentSection
+				});
+				break;
+			}
+		}
+		
+		// 如果没有时间但有内容，也作为条目（使用默认时间 00:00）
+		if (entries.length === 0 || entries[entries.length - 1].lineNumber !== i) {
+			// 检查是否是有内容的行（不是标题、不是空行）
+			if (trimmedLine && 
+				!trimmedLine.startsWith('#') && 
+				!trimmedLine.startsWith('>') &&
+				!trimmedLine.startsWith('---') &&
+				!trimmedLine.startsWith('```') &&
+				trimmedLine.includes('：') || trimmedLine.includes(':')) {
+				
+				// 提取键值对
+				const kvMatch = trimmedLine.match(/^[-*]\s*\*\*(.+?)\*\*[：:]\s*(.+)$/);
+				if (kvMatch) {
+					entries.push({
+						app: app,
+						time: '00:00',
+						content: `${kvMatch[1]}: ${kvMatch[2]}`,
+						filePath: filePath,
+						lineNumber: i,
+						section: currentSection
+					});
+				}
+			}
 		}
 	}
 
@@ -180,7 +252,7 @@ export async function editDiaryEntry(
 	
 	if (lineNumber >= 0 && lineNumber < lines.length) {
 		const line = lines[lineNumber];
-		const match = line.match(/^(\s*-\s+\d{1,2}:\d{2}\s+)/);
+		const match = line.match(/^(\s*[-*]\s+(?:\*\*时间\*\*[：:]\s*)?(?:\d{1,2}:\d{2}\s+)?)/);
 		if (match) {
 			lines[lineNumber] = match[1] + newContent;
 			await app.vault.modify(file, lines.join('\n'));
@@ -212,9 +284,12 @@ export function filterEntries(
 	const filteredDays: DiaryDay[] = [];
 
 	for (const day of days) {
-		const matchedEntries = day.entries.filter(entry => 
-			regex.test(entry.content) || regex.test(entry.time)
-		);
+		const matchedEntries = day.entries.filter(entry => {
+			// 搜索内容、时间、章节
+			return regex.test(entry.content) || 
+				   regex.test(entry.time) || 
+				   (entry.section && regex.test(entry.section));
+		});
 
 		if (matchedEntries.length > 0) {
 			filteredDays.push({
