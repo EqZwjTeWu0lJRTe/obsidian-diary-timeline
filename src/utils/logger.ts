@@ -40,6 +40,8 @@ export function getLogsAsString(): string {
 }
 
 export async function exportLogsToFile(app: any, folder: string): Promise<string> {
+	log('INFO', '开始导出日志');
+	
 	const filename = `diary-timeline-debug-${moment().format('YYYY-MM-DD-HHmmss')}.md`;
 	const filepath = `${folder}${filename}`;
 	
@@ -64,22 +66,34 @@ ${e.details || '无详情'}
 `;
 
 	try {
-		// 确保文件夹存在
-		const folderObj = app.vault.getAbstractFileByPath(folder);
-		if (!folderObj) {
-			await app.vault.createFolder(folder);
+		// 确保文件夹存在（忽略已存在的错误）
+		try {
+			const folderObj = app.vault.getAbstractFileByPath(folder);
+			if (!folderObj) {
+				log('INFO', `创建文件夹: ${folder}`);
+				await app.vault.createFolder(folder);
+			} else {
+				log('INFO', `文件夹已存在: ${folder}`);
+			}
+		} catch (folderError) {
+			// 文件夹已存在，忽略错误
+			log('WARN', '文件夹创建错误（可忽略）', String(folderError));
 		}
 		
 		// 检查文件是否已存在
 		const existingFile = app.vault.getAbstractFileByPath(filepath);
 		if (existingFile instanceof TFile) {
+			log('INFO', `修改现有文件: ${filepath}`);
 			await app.vault.modify(existingFile, content);
 		} else {
+			log('INFO', `创建新文件: ${filepath}`);
 			await app.vault.create(filepath, content);
 		}
 		
+		log('INFO', `日志导出成功: ${filepath}`);
 		return filepath;
 	} catch (error) {
+		log('ERROR', '导出日志失败', error instanceof Error ? error.message : String(error));
 		console.error('导出日志失败:', error);
 		return '';
 	}
